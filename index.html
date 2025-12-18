@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💣 Бомбочки — Игра на удачу</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
@@ -60,7 +62,25 @@
             max-width: 500px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
-        
+
+        /* Кнопка пополнения */
+        .top-up-btn {
+            background-color: #FFD700;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .top-up-btn:hover {
+            background-color: #e6c200;
+        }
+
         .balance-info {
             background-color: #333;
             padding: 15px;
@@ -274,6 +294,9 @@
     <div class="title">💣 БОМБОЧКИ 💣</div>
     
     <div class="game-container">
+        <!-- КНОПКА ПОПОЛНЕНИЯ -->
+        <button class="top-up-btn" id="topUpBtn">⚡ Пополнить за 100 🌟</button>
+
         <div class="balance-info">
             <div class="balance-title">ОБЩИЙ БАЛАНС</div>
             <div class="balance-amount" id="totalBalance">1000 ₽</div>
@@ -319,8 +342,16 @@
     </div>
 
     <script>
-        // Игровые переменные
-        let totalBalance = parseInt(localStorage.getItem('bombGameBalance')) || 1000; // Чтение из localStorage
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        let totalBalance = parseInt(localStorage.getItem('bombGameBalance')) || 1000;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        // Основные переменные
         let currentGameBalance = 10;
         let winStreak = 1;
         let gameOver = false;
@@ -331,8 +362,8 @@
         let cells = [];
         let openedCellsCount = 0;
         let totalMultiplier = 0;
-        
-        // Элементы DOM
+
+        // DOM-элементы
         const totalBalanceElement = document.getElementById('totalBalance');
         const currentWinElement = document.getElementById('currentWin');
         const multiplierElement = document.getElementById('multiplier');
@@ -343,8 +374,28 @@
         const cashoutBtn = document.getElementById('cashoutBtn');
         const statusMessage = document.getElementById('statusMessage');
         const balanceWarning = document.getElementById('balanceWarning');
-        
-        // Инициализация игрового поля
+        const topUpBtn = document.getElementById('topUpBtn');
+
+        // === ПОПОЛНЕНИЕ ЧЕРЕЗ TELEGRAM STARS ===
+        topUpBtn.addEventListener('click', () => {
+            if (!tg) {
+                alert('Игра должна запускаться внутри Telegram!');
+                return;
+            }
+
+            // Открываем оплату
+            tg.openInvoice('https://t.me/your_bot_username/app?start=buy_stars', (status) => {
+                if (status === 'paid') {
+                    totalBalance += 500; // Начисляем 500 ₽
+                    updateUI();
+                    showStatus('✅ +500 ₽ зачислено!', 'win');
+                } else if (status === 'failed') {
+                    showStatus('❌ Оплата не прошла', 'lose');
+                }
+            });
+        });
+
+        // === ОСНОВНАЯ ЛОГИКА ИГРЫ ===
         function initializeBoard() {
             gameBoard.innerHTML = '';
             cells = [];
@@ -364,7 +415,6 @@
             }
         }
         
-        // Начать новую игру
         function startGame() {
             const bet = parseInt(betInput.value);
             
@@ -408,7 +458,6 @@
             showStatus('Игра началась! Выберите клетку', 'win');
         }
         
-        // Обработка клика по клетке
         function handleCellClick(index) {
             if (gameOver || cells[index].classList.contains('opened')) {
                 return;
@@ -452,7 +501,6 @@
             showStatus(`Отлично! Текущий множитель: +${currentCellMultiplier.toFixed(1)}x. Сумма: ${totalMultiplier.toFixed(1)}x`, 'win');
         }
         
-        // Забрать выигрыш
         function cashOut() {
             if (!firstCellOpened || gameOver) {
                 return;
@@ -469,20 +517,16 @@
             showStatus(`Вы выиграли ${formatNumber(currentGameBalance)} ₽!`, 'win');
         }
         
-        // Обновление интерфейса
         function updateUI() {
             totalBalanceElement.textContent = `${formatNumber(totalBalance)} ₽`;
             currentWinElement.textContent = `${formatNumber(currentGameBalance)} ₽`;
             multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
             bombsCountElement.textContent = bombsCount;
             
-            // Сохраняем баланс при каждом обновлении
             localStorage.setItem('bombGameBalance', totalBalance);
-            
             checkBalance();
         }
         
-        // Проверка баланса
         function checkBalance() {
             const bet = parseInt(betInput.value) || 0;
             
@@ -500,12 +544,10 @@
             }
         }
         
-        // Форматирование чисел
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
         
-        // Показать статус
         function showStatus(message, type) {
             statusMessage.textContent = message;
             statusMessage.className = `status-message ${type}`;
@@ -515,37 +557,23 @@
                 statusMessage.className = 'status-message';
             }, 3000);
         }
-        
+
         // Обработчики событий
         startBtn.addEventListener('click', startGame);
         cashoutBtn.addEventListener('click', cashOut);
         
         betInput.addEventListener('input', function() {
             let value = parseInt(this.value);
-            
-            if (isNaN(value)) {
-                this.value = '';
-                checkBalance();
-                return;
-            }
-            
-            if (value < 1) {
-                this.value = 1;
-            }
-            
+            if (isNaN(value)) this.value = '';
             checkBalance();
         });
         
         betInput.addEventListener('change', function() {
             let value = parseInt(this.value);
-            
-            if (isNaN(value) || value < 1) {
-                this.value = 1;
-            }
-            
+            if (isNaN(value) || value < 1) this.value = 1;
             checkBalance();
         });
-        
+
         // Инициализация
         initializeBoard();
         updateUI();
