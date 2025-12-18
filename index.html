@@ -320,7 +320,7 @@
 
     <script>
         // Игровые переменные
-        let totalBalance = 1000;
+        let totalBalance = parseInt(localStorage.getItem('bombGameBalance')) || 1000; // Чтение из localStorage
         let currentGameBalance = 10;
         let winStreak = 1;
         let gameOver = false;
@@ -329,8 +329,8 @@
         let bombsCount = 5;
         let baseBet = 10;
         let cells = [];
-        let openedCellsCount = 0; // Счетчик открытых клеток
-        let totalMultiplier = 0; // Суммарный множитель
+        let openedCellsCount = 0;
+        let totalMultiplier = 0;
         
         // Элементы DOM
         const totalBalanceElement = document.getElementById('totalBalance');
@@ -348,10 +348,9 @@
         function initializeBoard() {
             gameBoard.innerHTML = '';
             cells = [];
-            openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            openedCellsCount = 0;
+            totalMultiplier = 0;
             
-            // Создаем 25 клеток (5x5)
             for (let i = 0; i < 25; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
@@ -375,7 +374,7 @@
             }
             
             if (bet > totalBalance) {
-                showStatus(`Недостаточно средств! Ваш баланс: ${totalBalance} ₽`, 'lose');
+                showStatus(`Недостаточно средств! Ваш баланс: ${formatNumber(totalBalance)} ₽`, 'lose');
                 return;
             }
             
@@ -384,17 +383,14 @@
             winStreak = 1;
             gameOver = false;
             firstCellOpened = false;
-            openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            openedCellsCount = 0;
+            totalMultiplier = 0;
             
-            // Сбросить поле
             initializeBoard();
             
-            // Установить количество бомб (случайно от 3 до 7)
             bombsCount = Math.floor(Math.random() * 5) + 3;
             bombsCountElement.textContent = bombsCount;
             
-            // Генерация позиций бомб
             bombPositions = [];
             while (bombPositions.length < bombsCount) {
                 const randomPos = Math.floor(Math.random() * 25);
@@ -403,7 +399,6 @@
                 }
             }
             
-            // Обновить интерфейс
             updateUI();
             startBtn.disabled = true;
             cashoutBtn.disabled = false;
@@ -419,14 +414,11 @@
                 return;
             }
             
-            // Проверка, попали ли на бомбу
             if (bombPositions.includes(index)) {
-                // Проигрыш
                 cells[index].textContent = '💣';
                 cells[index].classList.add('opened', 'bomb');
                 gameOver = true;
                 
-                // Показать все бомбы
                 bombPositions.forEach(pos => {
                     if (pos !== index) {
                         cells[pos].textContent = '💣';
@@ -444,20 +436,15 @@
                 return;
             }
             
-            // Выигрышная клетка
             firstCellOpened = true;
-            openedCellsCount++; // Увеличиваем счетчик открытых клеток
+            openedCellsCount++;
             
-            // Расчет текущего множителя для клетки
             const currentCellMultiplier = 1.0 + (openedCellsCount * 0.1);
-            
-            // Добавляем текущий множитель к суммарному
             totalMultiplier += currentCellMultiplier;
             
             cells[index].textContent = `${currentCellMultiplier.toFixed(1)}x`;
             cells[index].classList.add('opened', 'multiplier');
             
-            // Обновить текущий выигрыш (базовая ставка × суммарный множитель)
             winStreak = totalMultiplier;
             currentGameBalance = Math.floor(baseBet * totalMultiplier);
             updateUI();
@@ -489,7 +476,9 @@
             multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
             bombsCountElement.textContent = bombsCount;
             
-            // Проверка баланса для кнопки старта
+            // Сохраняем баланс при каждом обновлении
+            localStorage.setItem('bombGameBalance', totalBalance);
+            
             checkBalance();
         }
         
@@ -511,7 +500,7 @@
             }
         }
         
-        // Форматирование чисел с пробелами
+        // Форматирование чисел
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
         }
@@ -521,7 +510,6 @@
             statusMessage.textContent = message;
             statusMessage.className = `status-message ${type}`;
             
-            // Автоматически скрыть сообщение через 3 секунды
             setTimeout(() => {
                 statusMessage.textContent = '';
                 statusMessage.className = 'status-message';
@@ -532,7 +520,6 @@
         startBtn.addEventListener('click', startGame);
         cashoutBtn.addEventListener('click', cashOut);
         
-        // Обработчик ввода ставки - БЕЗ ОГРАНИЧЕНИЙ
         betInput.addEventListener('input', function() {
             let value = parseInt(this.value);
             
@@ -549,7 +536,6 @@
             checkBalance();
         });
         
-        // Также проверяем при изменении
         betInput.addEventListener('change', function() {
             let value = parseInt(this.value);
             
@@ -560,7 +546,7 @@
             checkBalance();
         });
         
-        // Инициализация при загрузке
+        // Инициализация
         initializeBoard();
         updateUI();
         checkBalance();
