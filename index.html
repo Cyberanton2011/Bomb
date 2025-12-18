@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💣 Бомбочки — Игра на удачу</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .top-section {
+            width: 100%;
+            max-width: 500px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .credit-label {
+            font-size: 9px;
+            font-style: italic;
+            color: red;
+            margin-bottom: 5px;
+        }
+        
+        .credit-label-rus {
+            font-size: 9px;
+            font-style: italic;
+            color: red;
+            margin-bottom: 15px;
+        }
+        
+        .title {
+            color: #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        .game-container {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .balance-info {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .balance-title {
+            color: #8F8F8F;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .balance-amount {
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .cell:hover {
+            background-color: #4a4a4a;
+            border-color: #FFD700;
+        }
+        
+        .cell.opened {
+            background-color: #2d4a2d;
+            cursor: default;
+        }
+        
+        .cell.bomb {
+            background-color: #4a2d2d;
+            color: #FF6B6B;
+        }
+        
+        .cell.multiplier {
+            color: #51CF66;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .bet-input {
+            background-color: #333;
+            border: 2px solid #3a3a3a;
+            border-radius: 5px;
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .bet-input:focus {
+            outline: none;
+            border-color: #FFD700;
+        }
+        
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-start {
+            background-color: #51CF66;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background-color: #3db954;
+        }
+        
+        .btn-start:disabled {
+            background-color: #2a4a2d;
+            cursor: not-allowed;
+        }
+        
+        .btn-cashout {
+            background-color: #FFD700;
+            color: #1a1a1a;
+        }
+        
+        .btn-cashout:hover {
+            background-color: #e6c200;
+        }
+        
+        .btn-cashout:disabled {
+            background-color: #4a4a2d;
+            cursor: not-allowed;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 8px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-label {
+            color: #8F8F8F;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .current-win {
+            color: #FFD700;
+        }
+        
+        .multiplier {
+            color: #51CF66;
+        }
+        
+        .bombs-count {
+            color: #FF6B6B;
+        }
+        
+        .status-message {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .win {
+            background-color: rgba(81, 207, 102, 0.2);
+            color: #51CF66;
+        }
+        
+        .lose {
+            background-color: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+        
+        .balance-warning {
+            color: #FF6B6B;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            min-height: 15px;
+        }
+        
+        @media (max-width: 520px) {
+            body {
+                padding: 10px;
+            }
+            
+            .game-board {
+                gap: 5px;
+            }
+            
+            .cell {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-section">
+        <div class="credit-label">MADE BY CYNERANTON_KIRILLOV TEAM</div>
+        <div class="credit-label-rus">СДЕЛАНО КОМАНДОЙ КИБЕРАНТОНА</div>
+    </div>
+    
+    <div class="title">💣 БОМБОЧКИ 💣</div>
+    
+    <div class="game-container">
+        <div class="balance-info">
+            <div class="balance-title">ОБЩИЙ БАЛАНС</div>
+            <div class="balance-amount" id="totalBalance">1000 ₽</div>
+        </div>
+        
+        <div class="game-board" id="gameBoard">
+            <!-- Клетки будут созданы JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <input 
+                type="number" 
+                class="bet-input" 
+                id="betInput" 
+                value="10" 
+                min="1"
+                placeholder="Введите ставку"
+            >
+            <div class="balance-warning" id="balanceWarning"></div>
+            
+            <div class="buttons-row">
+                <button class="btn btn-start" id="startBtn">СТАРТ</button>
+                <button class="btn btn-cashout" id="cashoutBtn" disabled>ЗАБРАТЬ</button>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">ТЕКУЩИЙ ВЫИГРЫШ</div>
+                <div class="info-value current-win" id="currentWin">10 ₽</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">МНОЖИТЕЛЬ</div>
+                <div class="info-value multiplier" id="multiplier">1x</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">БОМБЫ</div>
+                <div class="info-value bombs-count" id="bombsCount">5</div>
+            </div>
+        </div>
+        
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        // Игровые переменные
+        let totalBalance = 1000;
+        let currentGameBalance = 10;
+        let winStreak = 1;
+        let gameOver = false;
+        let firstCellOpened = false;
+        let bombPositions = [];
+        let bombsCount = 5;
+        let baseBet = 10;
+        let cells = [];
+        let openedCellsCount = 0; // Счетчик открытых клеток
+        let totalMultiplier = 0; // Суммарный множитель
+        
+        // Элементы DOM
+        const totalBalanceElement = document.getElementById('totalBalance');
+        const currentWinElement = document.getElementById('currentWin');
+        const multiplierElement = document.getElementById('multiplier');
+        const bombsCountElement = document.getElementById('bombsCount');
+        const gameBoard = document.getElementById('gameBoard');
+        const betInput = document.getElementById('betInput');
+        const startBtn = document.getElementById('startBtn');
+        const cashoutBtn = document.getElementById('cashoutBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const balanceWarning = document.getElementById('balanceWarning');
+        
+        // Инициализация игрового поля
+        function initializeBoard() {
+            gameBoard.innerHTML = '';
+            cells = [];
+            openedCellsCount = 0; // Сбрасываем счетчик
+            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            
+            // Создаем 25 клеток (5x5)
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                cell.textContent = '?';
+                
+                cell.addEventListener('click', () => handleCellClick(i));
+                
+                gameBoard.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+        
+        // Начать новую игру
+        function startGame() {
+            const bet = parseInt(betInput.value);
+            
+            if (isNaN(bet) || bet < 1) {
+                showStatus('Введите корректную ставку (мин. 1 ₽)', 'lose');
+                return;
+            }
+            
+            if (bet > totalBalance) {
+                showStatus(`Недостаточно средств! Ваш баланс: ${totalBalance} ₽`, 'lose');
+                return;
+            }
+            
+            baseBet = bet;
+            currentGameBalance = bet;
+            winStreak = 1;
+            gameOver = false;
+            firstCellOpened = false;
+            openedCellsCount = 0; // Сбрасываем счетчик
+            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            
+            // Сбросить поле
+            initializeBoard();
+            
+            // Установить количество бомб (случайно от 3 до 7)
+            bombsCount = Math.floor(Math.random() * 5) + 3;
+            bombsCountElement.textContent = bombsCount;
+            
+            // Генерация позиций бомб
+            bombPositions = [];
+            while (bombPositions.length < bombsCount) {
+                const randomPos = Math.floor(Math.random() * 25);
+                if (!bombPositions.includes(randomPos)) {
+                    bombPositions.push(randomPos);
+                }
+            }
+            
+            // Обновить интерфейс
+            updateUI();
+            startBtn.disabled = true;
+            cashoutBtn.disabled = false;
+            betInput.disabled = true;
+            balanceWarning.textContent = '';
+            
+            showStatus('Игра началась! Выберите клетку', 'win');
+        }
+        
+        // Обработка клика по клетке
+        function handleCellClick(index) {
+            if (gameOver || cells[index].classList.contains('opened')) {
+                return;
+            }
+            
+            // Проверка, попали ли на бомбу
+            if (bombPositions.includes(index)) {
+                // Проигрыш
+                cells[index].textContent = '💣';
+                cells[index].classList.add('opened', 'bomb');
+                gameOver = true;
+                
+                // Показать все бомбы
+                bombPositions.forEach(pos => {
+                    if (pos !== index) {
+                        cells[pos].textContent = '💣';
+                        cells[pos].classList.add('bomb');
+                    }
+                });
+                
+                totalBalance -= baseBet;
+                updateUI();
+                startBtn.disabled = false;
+                cashoutBtn.disabled = true;
+                betInput.disabled = false;
+                
+                showStatus(`Игра окончена! Вы проиграли ${formatNumber(baseBet)} ₽`, 'lose');
+                return;
+            }
+            
+            // Выигрышная клетка
+            firstCellOpened = true;
+            openedCellsCount++; // Увеличиваем счетчик открытых клеток
+            
+            // Расчет текущего множителя для клетки
+            const currentCellMultiplier = 1.0 + (openedCellsCount * 0.1);
+            
+            // Добавляем текущий множитель к суммарному
+            totalMultiplier += currentCellMultiplier;
+            
+            cells[index].textContent = `${currentCellMultiplier.toFixed(1)}x`;
+            cells[index].classList.add('opened', 'multiplier');
+            
+            // Обновить текущий выигрыш (базовая ставка × суммарный множитель)
+            winStreak = totalMultiplier;
+            currentGameBalance = Math.floor(baseBet * totalMultiplier);
+            updateUI();
+            
+            showStatus(`Отлично! Текущий множитель: +${currentCellMultiplier.toFixed(1)}x. Сумма: ${totalMultiplier.toFixed(1)}x`, 'win');
+        }
+        
+        // Забрать выигрыш
+        function cashOut() {
+            if (!firstCellOpened || gameOver) {
+                return;
+            }
+            
+            totalBalance += currentGameBalance;
+            gameOver = true;
+            
+            updateUI();
+            startBtn.disabled = false;
+            cashoutBtn.disabled = true;
+            betInput.disabled = false;
+            
+            showStatus(`Вы выиграли ${formatNumber(currentGameBalance)} ₽!`, 'win');
+        }
+        
+        // Обновление интерфейса
+        function updateUI() {
+            totalBalanceElement.textContent = `${formatNumber(totalBalance)} ₽`;
+            currentWinElement.textContent = `${formatNumber(currentGameBalance)} ₽`;
+            multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
+            bombsCountElement.textContent = bombsCount;
+            
+            // Проверка баланса для кнопки старта
+            checkBalance();
+        }
+        
+        // Проверка баланса
+        function checkBalance() {
+            const bet = parseInt(betInput.value) || 0;
+            
+            if (bet < 1) {
+                balanceWarning.textContent = 'Минимальная ставка: 1 ₽';
+                balanceWarning.style.color = '#FF6B6B';
+                startBtn.disabled = true;
+            } else if (bet > totalBalance) {
+                balanceWarning.textContent = `Недостаточно средств. Доступно: ${formatNumber(totalBalance)} ₽`;
+                balanceWarning.style.color = '#FF6B6B';
+                startBtn.disabled = true;
+            } else {
+                balanceWarning.textContent = '';
+                startBtn.disabled = false;
+            }
+        }
+        
+        // Форматирование чисел с пробелами
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+        
+        // Показать статус
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message ${type}`;
+            
+            // Автоматически скрыть сообщение через 3 секунды
+            setTimeout(() => {
+                statusMessage.textContent = '';
+                statusMessage.className = 'status-message';
+            }, 3000);
+        }
+        
+        // Обработчики событий
+        startBtn.addEventListener('click', startGame);
+        cashoutBtn.addEventListener('click', cashOut);
+        
+        // Обработчик ввода ставки - БЕЗ ОГРАНИЧЕНИЙ
+        betInput.addEventListener('input', function() {
+            let value = parseInt(this.value);
+            
+            if (isNaN(value)) {
+                this.value = '';
+                checkBalance();
+                return;
+            }
+            
+            if (value < 1) {
+                this.value = 1;
+            }
+            
+            checkBalance();
+        });
+        
+        // Также проверяем при изменении
+        betInput.addEventListener('change', function() {
+            let value = parseInt(this.value);
+            
+            if (isNaN(value) || value < 1) {
+                this.value = 1;
+            }
+            
+            checkBalance();
+        });
+        
+        // Инициализация при загрузке
+        initializeBoard();
+        updateUI();
+        checkBalance();
+    </script>
+</body>
+</html>
