@@ -528,7 +528,7 @@
         </div>
         
         <div class="save-info" id="saveInfo">Прогресс автоматически сохраняется</div>
-        <div class="token-reward" id="tokenReward">Выигрыш от 10 000 ₽: +30 опыта</div>
+        <div class="token-reward" id="tokenReward">За каждую выигранную игру: +1 опыт</div>
         
         <div class="status-message" id="statusMessage"></div>
     </div>
@@ -566,13 +566,6 @@
             0: 10000,    // До 50 токенов
             50: 100000,  // От 50 токенов
             100: 1000000 // От 100 токенов
-        };
-        
-        // Награды за опыт в зависимости от выигрыша
-        const TOKEN_REWARDS = {
-            10000: 30,   // За выигрыш 10 000 ₽
-            100000: 30,  // За выигрыш 100 000 ₽
-            1000000: 30  // За выигрыш 1 000 000 ₽
         };
         
         // Элементы DOM
@@ -783,14 +776,6 @@
             }
         }
         
-        // Получить награду за опыт
-        function getTokenReward(winAmount) {
-            if (winAmount >= 1000000) return TOKEN_REWARDS[1000000];
-            if (winAmount >= 100000) return TOKEN_REWARDS[100000];
-            if (winAmount >= 10000) return TOKEN_REWARDS[10000];
-            return 0;
-        }
-        
         // Обновление отображения лимитов
         function updateBetLimitsDisplay() {
             currentMaxBet = getCurrentMaxBet();
@@ -919,7 +904,7 @@
             checkLevelUp(oldTokens, totalTokens);
             updateUI();
             if (amount > 0) {
-                showStatus(`+${amount} опыта за крупный выигрыш!`, 'win');
+                showStatus(`+${amount} опыт!`, 'win');
             }
         }
         
@@ -1074,11 +1059,8 @@
             
             totalBalance += currentGameBalance;
             
-            // Начисляем опыт за крупный выигрыш
-            const tokenRewardAmount = getTokenReward(currentGameBalance);
-            if (tokenRewardAmount > 0) {
-                addTokens(tokenRewardAmount);
-            }
+            // Начисляем 1 опыт за успешную игру
+            addTokens(1);
             
             gameOver = true;
             
@@ -1089,11 +1071,7 @@
             // Запускаем фейерверки при выигрыше
             createFireworks(25, 4000);
             
-            let winMessage = `🎉 Вы выиграли ${formatNumber(currentGameBalance)} ₽!`;
-            if (tokenRewardAmount > 0) {
-                winMessage += ` +${tokenRewardAmount} опыта`;
-            }
-            showStatus(winMessage, 'win');
+            showStatus(`🎉 Вы выиграли ${formatNumber(currentGameBalance)} ₽! +1 опыт`, 'win');
         }
         
         // Завершение игры
@@ -1122,7 +1100,7 @@
             updateFever();
             
             // Обновляем информацию о наградах
-            tokenReward.textContent = `Выигрыш от 10 000 ₽: +30 опыта | от 100 000 ₽: +30 опыта | от 1 000 000 ₽: +30 опыта`;
+            tokenReward.textContent = `За каждую выигранную игру: +1 опыт`;
             
             // Проверка баланса для кнопки старта
             checkBalance();
