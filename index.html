@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💣 Бомбочки — Игра на удачу</title>
-    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -63,7 +62,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
 
-        /* Кнопка пополнения */
         .top-up-btn {
             background-color: #FFD700;
             color: #1a1a1a;
@@ -342,16 +340,69 @@
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
         const tg = window.Telegram?.WebApp;
-        let totalBalance = parseInt(localStorage.getItem('bombGameBalance')) || 1000;
+        let totalBalance = 1000; // Начальный баланс
+        let userId = null;
 
         if (tg) {
             tg.ready();
             tg.expand();
+            // Получаем ID пользователя
+            userId = tg.initDataUnsafe.user?.id;
+            if (userId) {
+                loadBalance(); // Загрузка баланса с сервера
+            } else {
+                document.getElementById('statusMessage').textContent = 'Ошибка авторизации';
+            }
+        } else {
+            alert('Игра должна запускаться в Telegram!');
         }
 
-        // Основные переменные
+        // === Загрузка баланса с сервера ===
+        async function loadBalance() {
+            try {
+                const response = await fetch('https://ваш-домен.ngrok.io/api/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+                const data = await response.json();
+                totalBalance = data.balance;
+                updateUI();
+            } catch (err) {
+                console.error('Ошибка загрузки баланса:', err);
+            }
+        }
+
+        // === Кнопка пополнения ===
+        const topUpBtn = document.getElementById('topUpBtn');
+        topUpBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('https://ваш-домен.ngrok.io/api/create-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId })
+                });
+
+                const { link } = await response.json();
+                tg.openTelegramLink(link, async (status) => {
+                    if (status === 'paid') {
+                        await fetch('https://ваш-домен.ngrok.io/api/invoice-paid', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: userId })
+                        });
+                        totalBalance += 500;
+                        updateUI();
+                        showStatus('✅ +500 ₽ зачислено!', 'win');
+                    }
+                });
+            } catch (err) {
+                showStatus('❌ Ошибка оплаты', 'lose');
+            }
+        });
+
+        // === Основная логика игры ===
         let currentGameBalance = 10;
         let winStreak = 1;
         let gameOver = false;
@@ -363,8 +414,6 @@
         let openedCellsCount = 0;
         let totalMultiplier = 0;
 
-        // DOM-элементы
-        const totalBalanceElement = document.getElementById('totalBalance');
         const currentWinElement = document.getElementById('currentWin');
         const multiplierElement = document.getElementById('multiplier');
         const bombsCountElement = document.getElementById('bombsCount');
@@ -374,28 +423,7 @@
         const cashoutBtn = document.getElementById('cashoutBtn');
         const statusMessage = document.getElementById('statusMessage');
         const balanceWarning = document.getElementById('balanceWarning');
-        const topUpBtn = document.getElementById('topUpBtn');
 
-        // === ПОПОЛНЕНИЕ ЧЕРЕЗ TELEGRAM STARS ===
-        topUpBtn.addEventListener('click', () => {
-            if (!tg) {
-                alert('Игра должна запускаться внутри Telegram!');
-                return;
-            }
-
-            // Открываем оплату
-            tg.openInvoice('https://t.me/your_bot_username/app?start=buy_stars', (status) => {
-                if (status === 'paid') {
-                    totalBalance += 500; // Начисляем 500 ₽
-                    updateUI();
-                    showStatus('✅ +500 ₽ зачислено!', 'win');
-                } else if (status === 'failed') {
-                    showStatus('❌ Оплата не прошла', 'lose');
-                }
-            });
-        });
-
-        // === ОСНОВНАЯ ЛОГИКА ИГРЫ ===
         function initializeBoard() {
             gameBoard.innerHTML = '';
             cells = [];
@@ -407,9 +435,7 @@
                 cell.className = 'cell';
                 cell.dataset.index = i;
                 cell.textContent = '?';
-                
                 cell.addEventListener('click', () => handleCellClick(i));
-                
                 gameBoard.appendChild(cell);
                 cells.push(cell);
             }
@@ -522,9 +548,6 @@
             currentWinElement.textContent = `${formatNumber(currentGameBalance)} ₽`;
             multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
             bombsCountElement.textContent = bombsCount;
-            
-            localStorage.setItem('bombGameBalance', totalBalance);
-            checkBalance();
         }
         
         function checkBalance() {
@@ -558,7 +581,6 @@
             }, 3000);
         }
 
-        // Обработчики событий
         startBtn.addEventListener('click', startGame);
         cashoutBtn.addEventListener('click', cashOut);
         
@@ -575,6 +597,7 @@
         });
 
         // Инициализация
+        const totalBalanceElement = document.getElementById('totalBalance');
         initializeBoard();
         updateUI();
         checkBalance();
