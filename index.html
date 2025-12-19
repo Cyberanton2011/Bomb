@@ -120,6 +120,35 @@
             font-weight: bold;
         }
         
+        .fever-panel {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            flex: 1;
+            margin-top: 10px;
+            border: 2px solid #FF1493;
+        }
+        
+        .fever-title {
+            color: #FF1493;
+            font-size: 12px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .fever-amount {
+            color: #FF69B4;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .fever-time {
+            color: #FFB6C1;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
         .reset-balance-btn {
             position: absolute;
             right: 10px;
@@ -137,6 +166,41 @@
         
         .reset-balance-btn:hover {
             background-color: #ff5252;
+        }
+        
+        .buy-fever-btn {
+            background-color: #FF1493;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+            width: 100%;
+            font-weight: bold;
+        }
+        
+        .buy-fever-btn:hover {
+            background-color: #FF0066;
+        }
+        
+        .buy-fever-btn:disabled {
+            background-color: #4a2d3a;
+            cursor: not-allowed;
+        }
+        
+        .fever-active {
+            background-color: rgba(255, 20, 147, 0.2);
+            border: 2px solid #FF1493;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 20, 147, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 20, 147, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 20, 147, 0); }
         }
         
         .game-board {
@@ -334,6 +398,14 @@
             font-weight: bold;
         }
         
+        .fever-info {
+            color: #FF69B4;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        
         .scroll-info {
             color: #8F8F8F;
             font-size: 11px;
@@ -404,12 +476,20 @@
             </div>
             
             <div class="tokens-panel">
-                <div class="tokens-title">ТОКЕНЫ</div>
+                <div class="tokens-title">ОПЫТ</div>
                 <div class="tokens-amount" id="totalTokens">0</div>
             </div>
         </div>
         
+        <div class="fever-panel" id="feverPanel">
+            <div class="fever-title">ЛИХОРАДКА</div>
+            <div class="fever-amount" id="feverAmount">0</div>
+            <div class="fever-time" id="feverTime"></div>
+            <button class="buy-fever-btn" id="buyFeverBtn">КУПИТЬ (45)</button>
+        </div>
+        
         <div class="bet-limits" id="betLimits">Текущий лимит ставки: 10 000 ₽</div>
+        <div class="fever-info" id="feverInfo">Выигрыш: +0.1 за клетку</div>
         
         <div class="game-board" id="gameBoard">
             <!-- Клетки будут созданы JavaScript -->
@@ -448,7 +528,7 @@
         </div>
         
         <div class="save-info" id="saveInfo">Прогресс автоматически сохраняется</div>
-        <div class="token-reward" id="tokenReward">За каждую выигранную игру: +1 токен</div>
+        <div class="token-reward" id="tokenReward">Выигрыш от 10 000 ₽: +30 опыта</div>
         
         <div class="status-message" id="statusMessage"></div>
     </div>
@@ -458,7 +538,8 @@
     <script>
         // Игровые переменные
         let totalBalance = 1000;
-        let totalTokens = 0;
+        let totalTokens = 0; // Опыт
+        let feverTokens = 0; // Лихорадка
         let currentGameBalance = 10;
         let winStreak = 1;
         let gameOver = false;
@@ -471,10 +552,14 @@
         let totalMultiplier = 0; // Суммарный множитель
         let currentMaxBet = 10000; // Текущий максимальный лимит ставки
         let isFireworksActive = false;
+        let feverActive = false;
+        let feverEndTime = 0;
+        let baseMultiplierIncrease = 0.1; // Базовое увеличение множителя
+        let feverMultiplierIncrease = 0.2; // Увеличение во время лихорадки
         
         // Ключ для localStorage
         const STORAGE_KEY = 'bombs_game_data';
-        const SAVE_VERSION = '1.2';
+        const SAVE_VERSION = '1.3';
         
         // Лимиты ставок в зависимости от токенов
         const BET_LIMITS = {
@@ -483,9 +568,20 @@
             100: 1000000 // От 100 токенов
         };
         
+        // Награды за опыт в зависимости от выигрыша
+        const TOKEN_REWARDS = {
+            10000: 30,   // За выигрыш 10 000 ₽
+            100000: 30,  // За выигрыш 100 000 ₽
+            1000000: 30  // За выигрыш 1 000 000 ₽
+        };
+        
         // Элементы DOM
         const totalBalanceElement = document.getElementById('totalBalance');
         const totalTokensElement = document.getElementById('totalTokens');
+        const feverAmountElement = document.getElementById('feverAmount');
+        const feverTimeElement = document.getElementById('feverTime');
+        const feverPanel = document.getElementById('feverPanel');
+        const buyFeverBtn = document.getElementById('buyFeverBtn');
         const currentWinElement = document.getElementById('currentWin');
         const multiplierElement = document.getElementById('multiplier');
         const bombsCountElement = document.getElementById('bombsCount');
@@ -499,6 +595,7 @@
         const saveInfo = document.getElementById('saveInfo');
         const tokenReward = document.getElementById('tokenReward');
         const betLimits = document.getElementById('betLimits');
+        const feverInfo = document.getElementById('feverInfo');
         const fireworksContainer = document.getElementById('fireworks-container');
         
         // Цвета для фейерверков
@@ -512,6 +609,60 @@
             '#00CED1', // бирюзовый
             '#FF1493'  // розовый
         ];
+        
+        // Проверка и обновление лихорадки
+        function updateFever() {
+            const now = Date.now();
+            if (feverActive && now >= feverEndTime) {
+                feverActive = false;
+                feverPanel.classList.remove('fever-active');
+                showStatus('Лихорадка закончилась!', 'lose');
+            }
+            
+            if (feverActive) {
+                const timeLeft = Math.ceil((feverEndTime - now) / 1000);
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                feverTimeElement.textContent = `Активна: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                feverInfo.textContent = 'Выигрыш: +0.2 за клетку (ЛИХОРАДКА!)';
+            } else {
+                feverTimeElement.textContent = '';
+                feverInfo.textContent = 'Выигрыш: +0.1 за клетку';
+            }
+            
+            // Обновляем кнопку покупки
+            buyFeverBtn.disabled = totalTokens < 45;
+            buyFeverBtn.textContent = `КУПИТЬ (45) - у вас: ${totalTokens}`;
+        }
+        
+        // Активировать лихорадку
+        function activateFever() {
+            if (feverTokens > 0) {
+                feverTokens--;
+                feverActive = true;
+                feverEndTime = Date.now() + (5 * 60 * 1000); // 5 минут
+                feverPanel.classList.add('fever-active');
+                updateFever();
+                saveData();
+                showStatus('Лихорадка активирована на 5 минут! Выигрыш x2!', 'win');
+            }
+        }
+        
+        // Купить лихорадку
+        function buyFever() {
+            if (totalTokens >= 45) {
+                totalTokens -= 45;
+                feverTokens++;
+                updateUI();
+                saveData();
+                showStatus('Куплена 1 лихорадка! Используйте в панели выше.', 'win');
+            }
+        }
+        
+        // Получить текущее увеличение множителя
+        function getMultiplierIncrease() {
+            return feverActive ? feverMultiplierIncrease : baseMultiplierIncrease;
+        }
         
         // Система фейерверков
         function createFireworks(count = 20, duration = 3000) {
@@ -632,6 +783,14 @@
             }
         }
         
+        // Получить награду за опыт
+        function getTokenReward(winAmount) {
+            if (winAmount >= 1000000) return TOKEN_REWARDS[1000000];
+            if (winAmount >= 100000) return TOKEN_REWARDS[100000];
+            if (winAmount >= 10000) return TOKEN_REWARDS[10000];
+            return 0;
+        }
+        
         // Обновление отображения лимитов
         function updateBetLimitsDisplay() {
             currentMaxBet = getCurrentMaxBet();
@@ -640,9 +799,9 @@
             
             // Добавляем информацию о достижениях
             if (totalTokens < 50) {
-                limitText += ` (${50 - totalTokens} токенов до 100 000 ₽)`;
+                limitText += ` (${50 - totalTokens} опыта до 100 000 ₽)`;
             } else if (totalTokens < 100) {
-                limitText += ` (${100 - totalTokens} токенов до 1 000 000 ₽)`;
+                limitText += ` (${100 - totalTokens} опыта до 1 000 000 ₽)`;
             } else {
                 limitText += ' (МАКСИМАЛЬНЫЙ УРОВЕНЬ!)';
             }
@@ -659,13 +818,13 @@
         // Проверка на достижение новых уровней
         function checkLevelUp(oldTokens, newTokens) {
             if (oldTokens < 50 && newTokens >= 50) {
-                showStatus(`🎉 ПОЗДРАВЛЯЕМ! Достигнуто 50 токенов! Лимит ставки увеличен до 100 000 ₽!`, 'win');
+                showStatus(`🎉 ПОЗДРАВЛЯЕМ! Достигнуто 50 опыта! Лимит ставки увеличен до 100 000 ₽!`, 'win');
                 // Фейерверки при достижении уровня
                 createFireworks(30, 5000);
             }
             
             if (oldTokens < 100 && newTokens >= 100) {
-                showStatus(`🚀 УРОВЕНЬ МАСТЕРА! Достигнуто 100 токенов! Лимит ставки увеличен до 1 000 000 ₽!`, 'win');
+                showStatus(`🚀 УРОВЕНЬ МАСТЕРА! Достигнуто 100 опыта! Лимит ставки увеличен до 1 000 000 ₽!`, 'win');
                 // Больше фейерверков при достижении максимального уровня
                 createFireworks(50, 8000);
             }
@@ -686,7 +845,19 @@
                             totalTokens = data.tokens;
                             checkLevelUp(oldTokens, totalTokens);
                         }
-                        console.log('Загружены сохраненные данные:', {balance: totalBalance, tokens: totalTokens});
+                        if (data.feverTokens && typeof data.feverTokens === 'number') {
+                            feverTokens = data.feverTokens;
+                        }
+                        if (data.feverActive && typeof data.feverActive === 'boolean' && data.feverActive) {
+                            if (data.feverEndTime && typeof data.feverEndTime === 'number') {
+                                const now = Date.now();
+                                if (now < data.feverEndTime) {
+                                    feverActive = true;
+                                    feverEndTime = data.feverEndTime;
+                                }
+                            }
+                        }
+                        console.log('Загружены сохраненные данные:', {balance: totalBalance, tokens: totalTokens, feverTokens: feverTokens, feverActive: feverActive});
                         showSaveInfo('Прогресс загружен из сохранения');
                     }
                 }
@@ -702,6 +873,9 @@
                     version: SAVE_VERSION,
                     balance: totalBalance,
                     tokens: totalTokens,
+                    feverTokens: feverTokens,
+                    feverActive: feverActive,
+                    feverEndTime: feverActive ? feverEndTime : null,
                     timestamp: new Date().toISOString()
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
@@ -715,13 +889,15 @@
         
         // Сброс баланса
         function resetBalance() {
-            if (confirm("Сбросить баланс до 1000 рублей и токены до 0? Текущий прогресс будет потерян.")) {
+            if (confirm("Сбросить баланс до 1000 рублей, опыт и лихорадку до 0? Текущий прогресс будет потерян.")) {
                 totalBalance = 1000;
                 totalTokens = 0;
+                feverTokens = 0;
+                feverActive = false;
                 clearFireworks(); // Очищаем фейерверки
                 updateUI();
                 saveData();
-                showStatus("Баланс и токены сброшены", "win");
+                showStatus("Баланс, опыт и лихорадка сброшены", "win");
             }
         }
         
@@ -736,13 +912,15 @@
             }, 3000);
         }
         
-        // Начислить токены
+        // Начислить опыт
         function addTokens(amount) {
             const oldTokens = totalTokens;
             totalTokens += amount;
             checkLevelUp(oldTokens, totalTokens);
             updateUI();
-            showStatus(`+${amount} токен за успешную игру!`, 'win');
+            if (amount > 0) {
+                showStatus(`+${amount} опыта за крупный выигрыш!`, 'win');
+            }
         }
         
         // Сохранение при закрытии страницы
@@ -764,7 +942,9 @@
             gameBoard.innerHTML = '';
             cells = [];
             openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            totalMultiplier = 0.3; // Начинаем с 0.3
+            winStreak = 0.3;
+            currentGameBalance = Math.floor(baseBet * 0.3);
             
             // Создаем 25 клеток (5x5)
             for (let i = 0; i < 25; i++) {
@@ -800,12 +980,12 @@
             }
             
             baseBet = bet;
-            currentGameBalance = bet;
-            winStreak = 1;
+            currentGameBalance = Math.floor(bet * 0.3);
+            winStreak = 0.3;
             gameOver = false;
             firstCellOpened = false;
             openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0; // Сбрасываем суммарный множитель
+            totalMultiplier = 0.3; // Начинаем с 0.3
             
             // Сбросить поле
             initializeBoard();
@@ -868,7 +1048,8 @@
             openedCellsCount++; // Увеличиваем счетчик открытых клеток
             
             // Расчет текущего множителя для клетки
-            const currentCellMultiplier = 1.0 + (openedCellsCount * 0.1);
+            const multiplierIncrease = getMultiplierIncrease();
+            const currentCellMultiplier = 0.3 + (openedCellsCount * multiplierIncrease);
             
             // Добавляем текущий множитель к суммарному
             totalMultiplier += currentCellMultiplier;
@@ -881,6 +1062,7 @@
             currentGameBalance = Math.floor(baseBet * totalMultiplier);
             updateUI();
             
+            const increaseText = feverActive ? '+0.2' : '+0.1';
             showStatus(`Отлично! Текущий множитель: +${currentCellMultiplier.toFixed(1)}x. Сумма: ${totalMultiplier.toFixed(1)}x`, 'win');
         }
         
@@ -892,8 +1074,11 @@
             
             totalBalance += currentGameBalance;
             
-            // Начисляем 1 токен за успешную игру
-            addTokens(1);
+            // Начисляем опыт за крупный выигрыш
+            const tokenRewardAmount = getTokenReward(currentGameBalance);
+            if (tokenRewardAmount > 0) {
+                addTokens(tokenRewardAmount);
+            }
             
             gameOver = true;
             
@@ -904,7 +1089,11 @@
             // Запускаем фейерверки при выигрыше
             createFireworks(25, 4000);
             
-            showStatus(`🎉 Вы выиграли ${formatNumber(currentGameBalance)} ₽! +1 токен`, 'win');
+            let winMessage = `🎉 Вы выиграли ${formatNumber(currentGameBalance)} ₽!`;
+            if (tokenRewardAmount > 0) {
+                winMessage += ` +${tokenRewardAmount} опыта`;
+            }
+            showStatus(winMessage, 'win');
         }
         
         // Завершение игры
@@ -925,10 +1114,15 @@
         function updateUI() {
             totalBalanceElement.textContent = `${formatNumber(totalBalance)} ₽`;
             totalTokensElement.textContent = `${formatNumber(totalTokens)}`;
+            feverAmountElement.textContent = `${feverTokens}`;
             currentWinElement.textContent = `${formatNumber(currentGameBalance)} ₽`;
             multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
             bombsCountElement.textContent = bombsCount;
             updateBetLimitsDisplay();
+            updateFever();
+            
+            // Обновляем информацию о наградах
+            tokenReward.textContent = `Выигрыш от 10 000 ₽: +30 опыта | от 100 000 ₽: +30 опыта | от 1 000 000 ₽: +30 опыта`;
             
             // Проверка баланса для кнопки старта
             checkBalance();
@@ -979,6 +1173,14 @@
         startBtn.addEventListener('click', startGame);
         cashoutBtn.addEventListener('click', cashOut);
         resetBalanceBtn.addEventListener('click', resetBalance);
+        buyFeverBtn.addEventListener('click', buyFever);
+        
+        // Кнопка активации лихорадки
+        feverPanel.addEventListener('click', function(e) {
+            if (e.target !== buyFeverBtn && feverTokens > 0 && !feverActive) {
+                activateFever();
+            }
+        });
         
         // Обработчик ввода ставки с динамическим ограничением
         betInput.addEventListener('input', function() {
@@ -1019,6 +1221,9 @@
             }
         });
         
+        // Обновление таймера лихорадки каждую секунду
+        setInterval(updateFever, 1000);
+        
         // Автоматическое сохранение при изменении баланса (каждые 30 секунд)
         setInterval(() => {
             if (!gameOver) {
@@ -1034,7 +1239,7 @@
             checkBalance();
             setupBeforeUnload(); // Настраиваем сохранение при закрытии
             
-            console.log('Игра "Бомбочки" загружена. Текущий баланс:', totalBalance, 'Токены:', totalTokens);
+            console.log('Игра "Бомбочки" загружена. Текущий баланс:', totalBalance, 'Опыт:', totalTokens, 'Лихорадка:', feverTokens);
             console.log('Текущий лимит ставки:', currentMaxBet, '₽');
         }
         
