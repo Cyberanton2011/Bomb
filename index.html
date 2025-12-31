@@ -3,35 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💣 Бомбочки — Игра на удачу</title>
+    <title>Отсчет до Нового Года</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
-            background-color: #1a1a1a;
-            color: white;
+            background: linear-gradient(135deg, #0a2e38 0%, #1a1a2e 100%);
+            color: #fff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             padding: 20px;
-            overflow: auto;
-            position: relative;
+            overflow-x: hidden;
         }
         
-        #fireworks-container {
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f, #4d96ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            color: #a8e6cf;
+        }
+        
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .countdown-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px 15px;
+            min-width: 140px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .countdown-box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .countdown-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #4d96ff;
+            text-shadow: 0 0 10px rgba(77, 150, 255, 0.5);
+        }
+        
+        .countdown-label {
+            font-size: 1.2rem;
+            color: #a8e6cf;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .new-year-date {
+            font-size: 1.5rem;
+            margin-top: 30px;
+            color: #ffd93d;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 10px;
+        }
+        
+        .message {
+            font-size: 1.8rem;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .fireworks {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 0;
         }
         
         .firework {
@@ -39,1194 +133,285 @@
             width: 5px;
             height: 5px;
             border-radius: 50%;
-            pointer-events: none;
+            animation: firework-animation 1.5s ease-out infinite;
         }
         
-        .firework-particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            pointer-events: none;
+        @keyframes firework-animation {
+            0% { transform: translateY(100vh); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
         }
         
-        .title {
-            color: #FFD700;
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            margin: 10px 0;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-            z-index: 100;
+        .snowflake {
+            position: fixed;
+            top: -10px;
+            color: white;
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            animation: fall linear infinite;
+            z-index: 0;
         }
         
-        .game-container {
-            background-color: #2a2a2a;
+        @keyframes fall {
+            to { transform: translateY(105vh) rotate(360deg); }
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 800px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            padding: 20px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            z-index: 100;
-            position: relative;
-            margin-bottom: 20px;
+            margin: 30px auto;
+            overflow: hidden;
         }
         
-        .balance-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 10px;
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0a2e38, #4d96ff, #a8e6cf);
+            width: 0%;
+            border-radius: 10px;
+            transition: width 1s ease;
         }
         
-        .balance-panel {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
-            position: relative;
-        }
-        
-        .balance-title {
-            color: #8F8F8F;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .balance-amount {
-            color: #FFD700;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        
-        .tokens-panel {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
-        }
-        
-        .tokens-title {
-            color: #8F8F8F;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .tokens-amount {
-            color: #6B8EFF;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        
-        .fever-panel {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            flex: 1;
+        .progress-text {
+            font-size: 1.1rem;
             margin-top: 10px;
-            border: 2px solid #FF1493;
+            color: #a8e6cf;
         }
         
-        .fever-title {
-            color: #FF1493;
-            font-size: 12px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .fever-amount {
-            color: #FF69B4;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        
-        .fever-time {
-            color: #FFB6C1;
-            font-size: 11px;
-            margin-top: 5px;
-        }
-        
-        .reset-balance-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: #FF6B6B;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 4px 8px;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .reset-balance-btn:hover {
-            background-color: #ff5252;
-        }
-        
-        .buy-fever-btn {
-            background-color: #FF1493;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-            width: 100%;
-            font-weight: bold;
-        }
-        
-        .buy-fever-btn:hover {
-            background-color: #FF0066;
-        }
-        
-        .buy-fever-btn:disabled {
-            background-color: #4a2d3a;
-            cursor: not-allowed;
-        }
-        
-        .fever-active {
-            background-color: rgba(255, 20, 147, 0.2);
-            border: 2px solid #FF1493;
-            animation: pulse 1s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 20, 147, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 20, 147, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 20, 147, 0); }
-        }
-        
-        .game-board {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            gap: 8px;
-            margin: 20px 0;
-        }
-        
-        .cell {
-            aspect-ratio: 1;
-            background-color: #3a3a3a;
-            border-radius: 5px;
+        .holiday-icons {
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 30px;
+            font-size: 2.5rem;
+            color: #ffd93d;
         }
         
-        .cell:hover {
-            background-color: #4a4a4a;
-            border-color: #FFD700;
-        }
-        
-        .cell.opened {
-            background-color: #2d4a2d;
-            cursor: default;
-        }
-        
-        .cell.bomb {
-            background-color: #4a2d2d;
-            color: #FF6B6B;
-        }
-        
-        .cell.multiplier {
-            color: #51CF66;
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .year-display {
+            font-size: 2rem;
             margin-top: 20px;
-        }
-        
-        .bet-input {
-            background-color: #333;
-            border: 2px solid #3a3a3a;
-            border-radius: 5px;
-            color: white;
-            padding: 12px;
-            font-size: 16px;
-            text-align: center;
-        }
-        
-        .bet-input:focus {
-            outline: none;
-            border-color: #FFD700;
-        }
-        
-        .buttons-row {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-start {
-            background-color: #51CF66;
-            color: white;
-        }
-        
-        .btn-start:hover {
-            background-color: #3db954;
-        }
-        
-        .btn-start:disabled {
-            background-color: #2a4a2d;
-            cursor: not-allowed;
-        }
-        
-        .btn-cashout {
-            background-color: #FFD700;
-            color: #1a1a1a;
-        }
-        
-        .btn-cashout:hover {
-            background-color: #e6c200;
-        }
-        
-        .btn-cashout:disabled {
-            background-color: #4a4a2d;
-            cursor: not-allowed;
-        }
-        
-        .game-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #333;
-            border-radius: 8px;
-        }
-        
-        .info-item {
-            text-align: center;
-        }
-        
-        .info-label {
-            color: #8F8F8F;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            font-size: 18px;
+            color: #ff6b6b;
             font-weight: bold;
         }
         
-        .current-win {
-            color: #FFD700;
-        }
-        
-        .multiplier {
-            color: #51CF66;
-        }
-        
-        .bombs-count {
-            color: #FF6B6B;
-        }
-        
-        .status-message {
+        footer {
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
             text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-            z-index: 100;
-            position: relative;
         }
         
-        .win {
-            background-color: rgba(81, 207, 102, 0.2);
-            color: #51CF66;
-        }
-        
-        .lose {
-            background-color: rgba(255, 107, 107, 0.2);
-            color: #FF6B6B;
-        }
-        
-        .balance-warning {
-            color: #FF6B6B;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 5px;
-            min-height: 15px;
-        }
-        
-        .save-info {
-            color: #51CF66;
-            font-size: 11px;
-            text-align: center;
-            margin-top: 10px;
-            font-style: italic;
-            opacity: 0.7;
-        }
-        
-        .token-reward {
-            color: #6B8EFF;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 5px;
-        }
-        
-        .bet-limits {
-            color: #FFD700;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-        
-        .fever-info {
-            color: #FF69B4;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-        
-        .scroll-info {
-            color: #8F8F8F;
-            font-size: 11px;
-            text-align: center;
-            margin-top: 10px;
-            font-style: italic;
-            opacity: 0.7;
-        }
-        
-        @media (max-width: 520px) {
-            body {
-                padding: 10px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .game-board {
-                gap: 5px;
-            }
-            
-            .cell {
-                font-size: 16px;
-            }
-            
-            .reset-balance-btn {
-                position: static;
-                transform: none;
-                margin-top: 10px;
-                width: 100%;
-            }
-            
-            .balance-info {
-                flex-direction: column;
-            }
-        }
-        
-        /* Стили для скроллбара */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #2a2a2a;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #FFD700;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #e6c200;
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            .countdown-box { min-width: 110px; padding: 20px 10px; }
+            .countdown-value { font-size: 2.8rem; }
+            .container { padding: 20px; }
         }
     </style>
 </head>
 <body>
-    <div id="fireworks-container"></div>
-    
-    <div class="title">💣 БОМБОЧКИ 💣</div>
-    
-    <div class="game-container">
-        <div class="balance-info">
-            <div class="balance-panel">
-                <div class="balance-title">БАЛАНС</div>
-                <div class="balance-amount" id="totalBalance">1 000 ₽</div>
-                <button class="reset-balance-btn" id="resetBalanceBtn">Сбросить</button>
+    <div class="container">
+        <h1><i class="fas fa-gift"></i> Отсчет до Нового Года <i class="fas fa-star"></i></h1>
+        <p class="subtitle">До следующего Нового Года осталось:</p>
+        
+        <div class="countdown-container">
+            <div class="countdown-box">
+                <div class="countdown-value" id="days">00</div>
+                <div class="countdown-label">Дней</div>
             </div>
             
-            <div class="tokens-panel">
-                <div class="tokens-title">ОПЫТ</div>
-                <div class="tokens-amount" id="totalTokens">0</div>
+            <div class="countdown-box">
+                <div class="countdown-value" id="hours">00</div>
+                <div class="countdown-label">Часов</div>
             </div>
-        </div>
-        
-        <div class="fever-panel" id="feverPanel">
-            <div class="fever-title">ЛИХОРАДКА</div>
-            <div class="fever-amount" id="feverAmount">0</div>
-            <div class="fever-time" id="feverTime"></div>
-            <button class="buy-fever-btn" id="buyFeverBtn">КУПИТЬ (45)</button>
-        </div>
-        
-        <div class="bet-limits" id="betLimits">Текущий лимит ставки: 10 000 ₽</div>
-        <div class="fever-info" id="feverInfo">Выигрыш: +0.1 за клетку</div>
-        
-        <div class="game-board" id="gameBoard">
-            <!-- Клетки будут созданы JavaScript -->
-        </div>
-        
-        <div class="controls">
-            <input 
-                type="number" 
-                class="bet-input" 
-                id="betInput" 
-                value="10" 
-                min="1"
-                placeholder="Введите ставку"
-            >
-            <div class="balance-warning" id="balanceWarning"></div>
             
-            <div class="buttons-row">
-                <button class="btn btn-start" id="startBtn">СТАРТ</button>
-                <button class="btn btn-cashout" id="cashoutBtn" disabled>ЗАБРАТЬ</button>
+            <div class="countdown-box">
+                <div class="countdown-value" id="minutes">00</div>
+                <div class="countdown-label">Минут</div>
+            </div>
+            
+            <div class="countdown-box">
+                <div class="countdown-value" id="seconds">00</div>
+                <div class="countdown-label">Секунд</div>
             </div>
         </div>
         
-        <div class="game-info">
-            <div class="info-item">
-                <div class="info-label">ТЕКУЩИЙ ВЫИГРЫШ</div>
-                <div class="info-value current-win" id="currentWin">10 ₽</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">МНОЖИТЕЛЬ</div>
-                <div class="info-value multiplier" id="multiplier">1x</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">БОМБЫ</div>
-                <div class="info-value bombs-count" id="bombsCount">5</div>
-            </div>
+        <div class="year-display" id="next-year"></div>
+        
+        <div class="new-year-date" id="new-year-date"></div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Год завершен на 0%</div>
+        
+        <div class="message" id="new-year-message">
+            <i class="fas fa-glass-cheers"></i> С Новым Годом! <i class="fas fa-glass-cheers"></i>
         </div>
         
-        <div class="save-info" id="saveInfo">Прогресс автоматически сохраняется</div>
-        <div class="token-reward" id="tokenReward">За каждую выигранную игру: +1 опыт</div>
-        
-        <div class="status-message" id="statusMessage"></div>
+        <div class="holiday-icons">
+            <i class="fas fa-tree"></i>
+            <i class="fas fa-snowflake"></i>
+            <i class="fas fa-candy-cane"></i>
+            <i class="fas fa-sleigh"></i>
+            <i class="fas fa-star"></i>
+        </div>
     </div>
     
-    <div class="scroll-info">Используйте колесико мыши или пальцем для прокрутки</div>
+    <div class="fireworks" id="fireworks"></div>
+    
+    <footer>
+        Таймер обновляется в реальном времени. Создано с ❄️ праздничным настроением!
+    </footer>
 
     <script>
-        // Игровые переменные
-        let totalBalance = 1000;
-        let totalTokens = 0; // Опыт
-        let feverTokens = 0; // Лихорадка
-        let currentGameBalance = 10;
-        let winStreak = 1;
-        let gameOver = false;
-        let firstCellOpened = false;
-        let bombPositions = [];
-        let bombsCount = 5;
-        let baseBet = 10;
-        let cells = [];
-        let openedCellsCount = 0; // Счетчик открытых клеток
-        let totalMultiplier = 0; // Суммарный множитель
-        let currentMaxBet = 10000; // Текущий максимальный лимит ставки
-        let isFireworksActive = false;
-        let feverActive = false;
-        let feverEndTime = 0;
-        let baseMultiplierIncrease = 0.1; // Базовое увеличение множителя
-        let feverMultiplierIncrease = 0.2; // Увеличение во время лихорадки
-        
-        // Ключ для localStorage
-        const STORAGE_KEY = 'bombs_game_data';
-        const SAVE_VERSION = '1.3';
-        
-        // Лимиты ставок в зависимости от токенов
-        const BET_LIMITS = {
-            0: 10000,    // До 50 токенов
-            50: 100000,  // От 50 токенов
-            100: 1000000 // От 100 токенов
-        };
-        
-        // Элементы DOM
-        const totalBalanceElement = document.getElementById('totalBalance');
-        const totalTokensElement = document.getElementById('totalTokens');
-        const feverAmountElement = document.getElementById('feverAmount');
-        const feverTimeElement = document.getElementById('feverTime');
-        const feverPanel = document.getElementById('feverPanel');
-        const buyFeverBtn = document.getElementById('buyFeverBtn');
-        const currentWinElement = document.getElementById('currentWin');
-        const multiplierElement = document.getElementById('multiplier');
-        const bombsCountElement = document.getElementById('bombsCount');
-        const gameBoard = document.getElementById('gameBoard');
-        const betInput = document.getElementById('betInput');
-        const startBtn = document.getElementById('startBtn');
-        const cashoutBtn = document.getElementById('cashoutBtn');
-        const statusMessage = document.getElementById('statusMessage');
-        const balanceWarning = document.getElementById('balanceWarning');
-        const resetBalanceBtn = document.getElementById('resetBalanceBtn');
-        const saveInfo = document.getElementById('saveInfo');
-        const tokenReward = document.getElementById('tokenReward');
-        const betLimits = document.getElementById('betLimits');
-        const feverInfo = document.getElementById('feverInfo');
-        const fireworksContainer = document.getElementById('fireworks-container');
-        
-        // Цвета для фейерверков
-        const FIREWORK_COLORS = [
-            '#FFD700', // золотой
-            '#51CF66', // зеленый
-            '#6B8EFF', // синий
-            '#FF6B6B', // красный
-            '#FF8C00', // оранжевый
-            '#9370DB', // фиолетовый
-            '#00CED1', // бирюзовый
-            '#FF1493'  // розовый
-        ];
-        
-        // Проверка и обновление лихорадки
-        function updateFever() {
-            const now = Date.now();
-            if (feverActive && now >= feverEndTime) {
-                feverActive = false;
-                feverPanel.classList.remove('fever-active');
-                showStatus('Лихорадка закончилась!', 'lose');
-            }
+        // Создание снежинок
+        function createSnowflakes() {
+            const snowflakeContainer = document.body;
+            const snowflakesCount = 50;
             
-            if (feverActive) {
-                const timeLeft = Math.ceil((feverEndTime - now) / 1000);
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                feverTimeElement.textContent = `Активна: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-                feverInfo.textContent = 'Выигрыш: +0.2 за клетку (ЛИХОРАДКА!)';
-            } else {
-                feverTimeElement.textContent = '';
-                feverInfo.textContent = 'Выигрыш: +0.1 за клетку';
-            }
-            
-            // Обновляем кнопку покупки
-            buyFeverBtn.disabled = totalTokens < 45;
-            buyFeverBtn.textContent = `КУПИТЬ (45) - у вас: ${totalTokens}`;
-        }
-        
-        // Активировать лихорадку
-        function activateFever() {
-            if (feverTokens > 0) {
-                feverTokens--;
-                feverActive = true;
-                feverEndTime = Date.now() + (5 * 60 * 1000); // 5 минут
-                feverPanel.classList.add('fever-active');
-                updateFever();
-                saveData();
-                showStatus('Лихорадка активирована на 5 минут! Выигрыш x2!', 'win');
-            }
-        }
-        
-        // Купить лихорадку
-        function buyFever() {
-            if (totalTokens >= 45) {
-                totalTokens -= 45;
-                feverTokens++;
-                updateUI();
-                saveData();
-                showStatus('Куплена 1 лихорадка! Используйте в панели выше.', 'win');
-            }
-        }
-        
-        // Получить текущее увеличение множителя
-        function getMultiplierIncrease() {
-            return feverActive ? feverMultiplierIncrease : baseMultiplierIncrease;
-        }
-        
-        // Система фейерверков
-        function createFireworks(count = 20, duration = 3000) {
-            if (isFireworksActive) return;
-            isFireworksActive = true;
-            
-            const startTime = Date.now();
-            
-            function launchFirework() {
-                if (Date.now() - startTime > duration) {
-                    isFireworksActive = false;
-                    return;
-                }
+            for (let i = 0; i < snowflakesCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                snowflake.innerHTML = '❄';
                 
-                // Создаем основную частицу фейерверка
-                const firework = document.createElement('div');
-                firework.className = 'firework';
+                // Случайные свойства для снежинок
+                const size = Math.random() * 1.5 + 0.5;
+                const startPosition = Math.random() * 100;
+                const fallDuration = Math.random() * 10 + 10;
+                const fallDelay = Math.random() * 5;
+                const opacity = Math.random() * 0.7 + 0.3;
                 
-                // Выбираем случайный цвет
-                const color = FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)];
-                firework.style.backgroundColor = color;
-                firework.style.boxShadow = `0 0 10px ${color}`;
+                snowflake.style.left = `${startPosition}vw`;
+                snowflake.style.fontSize = `${size}rem`;
+                snowflake.style.animationDuration = `${fallDuration}s`;
+                snowflake.style.animationDelay = `${fallDelay}s`;
+                snowflake.style.opacity = opacity;
                 
-                // Случайная позиция на экране
-                const x = Math.random() * window.innerWidth;
-                const y = Math.random() * window.innerHeight;
+                snowflakeContainer.appendChild(snowflake);
                 
-                firework.style.left = `${x}px`;
-                firework.style.top = `${y}px`;
-                
-                fireworksContainer.appendChild(firework);
-                
-                // Анимация взлета
-                firework.animate([
-                    { transform: 'translateY(100vh) scale(0.5)', opacity: 0 },
-                    { transform: 'translateY(0) scale(1)', opacity: 1 }
-                ], {
-                    duration: 500,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                });
-                
-                // Взрыв через 500мс
+                // Удаление снежинок после завершения анимации
                 setTimeout(() => {
-                    createExplosion(x, y, color);
-                    firework.remove();
-                }, 500);
-                
-                // Запускаем следующий фейерверк
-                setTimeout(launchFirework, Math.random() * 200 + 100);
-            }
-            
-            // Запускаем первый фейерверк
-            launchFirework();
-        }
-        
-        function createExplosion(x, y, color) {
-            const particleCount = Math.floor(Math.random() * 30) + 20;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'firework-particle';
-                particle.style.backgroundColor = color;
-                particle.style.boxShadow = `0 0 5px ${color}`;
-                
-                // Начальная позиция
-                particle.style.left = `${x}px`;
-                particle.style.top = `${y}px`;
-                
-                fireworksContainer.appendChild(particle);
-                
-                // Случайное направление и скорость
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 3 + 2;
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                
-                // Случайный размер
-                const size = Math.random() * 4 + 2;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                
-                // Анимация частицы
-                const animation = particle.animate([
-                    { 
-                        transform: 'translate(0, 0) scale(1)', 
-                        opacity: 1 
-                    },
-                    { 
-                        transform: `translate(${vx * 50}px, ${vy * 50}px) scale(0.1)`, 
-                        opacity: 0 
-                    }
-                ], {
-                    duration: Math.random() * 1000 + 500,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                });
-                
-                // Удаляем частицу после анимации
-                animation.onfinish = () => {
-                    particle.remove();
-                };
+                    snowflake.remove();
+                }, (fallDuration + fallDelay) * 1000);
             }
         }
         
-        // Очистка фейерверков
-        function clearFireworks() {
-            fireworksContainer.innerHTML = '';
-            isFireworksActive = false;
-        }
-        
-        // Определение текущего лимита ставки на основе токенов
-        function getCurrentMaxBet() {
-            if (totalTokens >= 100) {
-                return BET_LIMITS[100];
-            } else if (totalTokens >= 50) {
-                return BET_LIMITS[50];
-            } else {
-                return BET_LIMITS[0];
-            }
-        }
-        
-        // Обновление отображения лимитов
-        function updateBetLimitsDisplay() {
-            currentMaxBet = getCurrentMaxBet();
+        // Создание фейерверков
+        function createFirework() {
+            const fireworksContainer = document.getElementById('fireworks');
+            const firework = document.createElement('div');
+            firework.classList.add('firework');
             
-            let limitText = `Текущий лимит ставки: ${formatNumber(currentMaxBet)} ₽`;
+            // Случайные свойства для фейерверка
+            const leftPosition = Math.random() * 100;
+            const size = Math.random() * 8 + 2;
+            const animationDuration = Math.random() * 1 + 1;
+            const colors = ['#ff6b6b', '#ffd93d', '#6bcf7f', '#4d96ff', '#ff8e6b'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
             
-            // Добавляем информацию о достижениях
-            if (totalTokens < 50) {
-                limitText += ` (${50 - totalTokens} опыта до 100 000 ₽)`;
-            } else if (totalTokens < 100) {
-                limitText += ` (${100 - totalTokens} опыта до 1 000 000 ₽)`;
-            } else {
-                limitText += ' (МАКСИМАЛЬНЫЙ УРОВЕНЬ!)';
-            }
+            firework.style.left = `${leftPosition}vw`;
+            firework.style.width = `${size}px`;
+            firework.style.height = `${size}px`;
+            firework.style.backgroundColor = color;
+            firework.style.animationDuration = `${animationDuration}s`;
             
-            betLimits.textContent = limitText;
+            fireworksContainer.appendChild(firework);
             
-            // Обновляем placeholder в поле ввода
-            betInput.placeholder = `Введите ставку (1-${formatNumber(currentMaxBet)} ₽)`;
-            
-            // Обновляем max атрибут
-            betInput.max = currentMaxBet;
-        }
-        
-        // Проверка на достижение новых уровней
-        function checkLevelUp(oldTokens, newTokens) {
-            if (oldTokens < 50 && newTokens >= 50) {
-                showStatus(`🎉 ПОЗДРАВЛЯЕМ! Достигнуто 50 опыта! Лимит ставки увеличен до 100 000 ₽!`, 'win');
-                // Фейерверки при достижении уровня
-                createFireworks(30, 5000);
-            }
-            
-            if (oldTokens < 100 && newTokens >= 100) {
-                showStatus(`🚀 УРОВЕНЬ МАСТЕРА! Достигнуто 100 опыта! Лимит ставки увеличен до 1 000 000 ₽!`, 'win');
-                // Больше фейерверков при достижении максимального уровня
-                createFireworks(50, 8000);
-            }
-        }
-        
-        // Загрузка сохраненных данных
-        function loadSavedData() {
-            try {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    if (data.version === SAVE_VERSION) {
-                        if (data.balance && typeof data.balance === 'number') {
-                            totalBalance = data.balance;
-                        }
-                        if (data.tokens && typeof data.tokens === 'number') {
-                            const oldTokens = totalTokens;
-                            totalTokens = data.tokens;
-                            checkLevelUp(oldTokens, totalTokens);
-                        }
-                        if (data.feverTokens && typeof data.feverTokens === 'number') {
-                            feverTokens = data.feverTokens;
-                        }
-                        if (data.feverActive && typeof data.feverActive === 'boolean' && data.feverActive) {
-                            if (data.feverEndTime && typeof data.feverEndTime === 'number') {
-                                const now = Date.now();
-                                if (now < data.feverEndTime) {
-                                    feverActive = true;
-                                    feverEndTime = data.feverEndTime;
-                                }
-                            }
-                        }
-                        console.log('Загружены сохраненные данные:', {balance: totalBalance, tokens: totalTokens, feverTokens: feverTokens, feverActive: feverActive});
-                        showSaveInfo('Прогресс загружен из сохранения');
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке данных:', error);
-            }
-        }
-        
-        // Сохранение данных
-        function saveData() {
-            try {
-                const saveData = {
-                    version: SAVE_VERSION,
-                    balance: totalBalance,
-                    tokens: totalTokens,
-                    feverTokens: feverTokens,
-                    feverActive: feverActive,
-                    feverEndTime: feverActive ? feverEndTime : null,
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-                console.log('Данные сохранены:', saveData);
-                showSaveInfo('Прогресс сохранен');
-            } catch (error) {
-                console.error('Ошибка при сохранении данных:', error);
-                showSaveInfo('Ошибка сохранения', 'error');
-            }
-        }
-        
-        // Сброс баланса
-        function resetBalance() {
-            if (confirm("Сбросить баланс до 1000 рублей, опыт и лихорадку до 0? Текущий прогресс будет потерян.")) {
-                totalBalance = 1000;
-                totalTokens = 0;
-                feverTokens = 0;
-                feverActive = false;
-                clearFireworks(); // Очищаем фейерверки
-                updateUI();
-                saveData();
-                showStatus("Баланс, опыт и лихорадка сброшены", "win");
-            }
-        }
-        
-        // Показать информацию о сохранении
-        function showSaveInfo(message, type = 'success') {
-            saveInfo.textContent = message;
-            saveInfo.style.color = type === 'error' ? '#FF6B6B' : '#51CF66';
-            
+            // Удаление фейерверка после завершения анимации
             setTimeout(() => {
-                saveInfo.textContent = 'Прогресс автоматически сохраняется';
-                saveInfo.style.color = '#51CF66';
-            }, 3000);
+                firework.remove();
+            }, animationDuration * 1000);
         }
         
-        // Начислить опыт
-        function addTokens(amount) {
-            const oldTokens = totalTokens;
-            totalTokens += amount;
-            checkLevelUp(oldTokens, totalTokens);
-            updateUI();
-            if (amount > 0) {
-                showStatus(`+${amount} опыт!`, 'win');
+        // Функция обновления таймера
+        function updateCountdown() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            
+            // Определение даты следующего Нового Года
+            let nextNewYear = new Date(currentYear + 1, 0, 1, 0, 0, 0);
+            
+            // Если Новый Год уже наступил в этом году, берем следующий
+            if (now.getMonth() === 0 && now.getDate() === 1 && now.getHours() === 0) {
+                nextNewYear = new Date(currentYear, 0, 1, 0, 0, 0);
             }
-        }
-        
-        // Сохранение при закрытии страницы
-        function setupBeforeUnload() {
-            window.addEventListener('beforeunload', () => {
-                saveData();
-            });
             
-            // Сохранение при изменении видимости страницы
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    saveData();
-                }
-            });
-        }
-        
-        // Инициализация игрового поля
-        function initializeBoard() {
-            gameBoard.innerHTML = '';
-            cells = [];
-            openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0.3; // Начинаем с 0.3
-            winStreak = 0.3;
-            currentGameBalance = Math.floor(baseBet * 0.3);
+            const timeDiff = nextNewYear - now;
             
-            // Создаем 25 клеток (5x5)
-            for (let i = 0; i < 25; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.index = i;
-                cell.textContent = '?';
+            // Если Новый Год наступил
+            if (timeDiff <= 0) {
+                document.getElementById('new-year-message').style.display = 'block';
+                document.getElementById('days').textContent = '00';
+                document.getElementById('hours').textContent = '00';
+                document.getElementById('minutes').textContent = '00';
+                document.getElementById('seconds').textContent = '00';
                 
-                cell.addEventListener('click', () => handleCellClick(i));
+                // Активируем фейерверки
+                setInterval(createFirework, 200);
                 
-                gameBoard.appendChild(cell);
-                cells.push(cell);
-            }
-        }
-        
-        // Начать новую игру
-        function startGame() {
-            const bet = parseInt(betInput.value);
-            
-            if (isNaN(bet) || bet < 1) {
-                showStatus('Введите корректную ставку (мин. 1 ₽)', 'lose');
+                // Обновляем информацию о годе
+                document.getElementById('next-year').textContent = `С Новым ${currentYear + 1} Годом!`;
+                document.getElementById('new-year-date').textContent = `Поздравляем! Новый год наступил!`;
+                document.getElementById('progress-bar').style.width = '100%';
+                document.getElementById('progress-text').textContent = 'Год завершен на 100%';
+                
                 return;
             }
             
-            if (bet > currentMaxBet) {
-                showStatus(`Максимальная ставка: ${formatNumber(currentMaxBet)} ₽`, 'lose');
-                return;
-            }
+            // Вычисление оставшегося времени
+            const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             
-            if (bet > totalBalance) {
-                showStatus(`Недостаточно средств! Ваш баланс: ${formatNumber(totalBalance)} ₽`, 'lose');
-                return;
-            }
+            // Обновление отображения таймера
+            document.getElementById('days').textContent = days.toString().padStart(2, '0');
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
             
-            baseBet = bet;
-            currentGameBalance = Math.floor(bet * 0.3);
-            winStreak = 0.3;
-            gameOver = false;
-            firstCellOpened = false;
-            openedCellsCount = 0; // Сбрасываем счетчик
-            totalMultiplier = 0.3; // Начинаем с 0.3
+            // Обновление информации о годе
+            document.getElementById('next-year').textContent = `До ${currentYear + 1} года`;
+            document.getElementById('new-year-date').textContent = `Следующий Новый Год: 1 января ${currentYear + 1}`;
             
-            // Сбросить поле
-            initializeBoard();
+            // Расчет прогресса года
+            const startOfYear = new Date(currentYear, 0, 1, 0, 0, 0);
+            const endOfYear = new Date(currentYear + 1, 0, 1, 0, 0, 0);
+            const yearProgress = ((now - startOfYear) / (endOfYear - startOfYear)) * 100;
             
-            // Установить количество бомб (случайно от 3 до 7)
-            bombsCount = Math.floor(Math.random() * 5) + 3;
-            bombsCountElement.textContent = bombsCount;
+            document.getElementById('progress-bar').style.width = `${Math.min(yearProgress, 100)}%`;
+            document.getElementById('progress-text').textContent = `Год завершен на ${Math.round(yearProgress)}%`;
             
-            // Генерация позиций бомб
-            bombPositions = [];
-            while (bombPositions.length < bombsCount) {
-                const randomPos = Math.floor(Math.random() * 25);
-                if (!bombPositions.includes(randomPos)) {
-                    bombPositions.push(randomPos);
+            // Случайное создание фейерверков когда мало времени
+            if (days === 0 && hours < 6) {
+                if (Math.random() < 0.05) {
+                    createFirework();
                 }
             }
-            
-            // Обновить интерфейс
-            updateUI();
-            startBtn.disabled = true;
-            cashoutBtn.disabled = false;
-            betInput.disabled = true;
-            balanceWarning.textContent = '';
-            
-            showStatus('Игра началась! Выберите клетку', 'win');
         }
         
-        // Обработка клика по клетке
-        function handleCellClick(index) {
-            if (gameOver || cells[index].classList.contains('opened')) {
-                return;
-            }
-            
-            // Проверка, попали ли на бомбу
-            if (bombPositions.includes(index)) {
-                // Проигрыш
-                cells[index].textContent = '💣';
-                cells[index].classList.add('opened', 'bomb');
-                gameOver = true;
-                
-                // Показать все бомбы
-                bombPositions.forEach(pos => {
-                    if (pos !== index) {
-                        cells[pos].textContent = '💣';
-                        cells[pos].classList.add('bomb');
-                    }
-                });
-                
-                totalBalance -= baseBet;
-                updateUI();
-                saveData(); // Сохраняем после изменения баланса
-                endGame();
-                
-                showStatus(`Игра окончена! Вы проиграли ${formatNumber(baseBet)} ₽`, 'lose');
-                return;
-            }
-            
-            // Выигрышная клетка
-            firstCellOpened = true;
-            openedCellsCount++; // Увеличиваем счетчик открытых клеток
-            
-            // Расчет текущего множителя для клетки
-            const multiplierIncrease = getMultiplierIncrease();
-            const currentCellMultiplier = 0.3 + (openedCellsCount * multiplierIncrease);
-            
-            // Добавляем текущий множитель к суммарному
-            totalMultiplier += currentCellMultiplier;
-            
-            cells[index].textContent = `${currentCellMultiplier.toFixed(1)}x`;
-            cells[index].classList.add('opened', 'multiplier');
-            
-            // Обновить текущий выигрыш (базовая ставка × суммарный множитель)
-            winStreak = totalMultiplier;
-            currentGameBalance = Math.floor(baseBet * totalMultiplier);
-            updateUI();
-            
-            const increaseText = feverActive ? '+0.2' : '+0.1';
-            showStatus(`Отлично! Текущий множитель: +${currentCellMultiplier.toFixed(1)}x. Сумма: ${totalMultiplier.toFixed(1)}x`, 'win');
-        }
-        
-        // Забрать выигрыш
-        function cashOut() {
-            if (!firstCellOpened || gameOver) {
-                return;
-            }
-            
-            totalBalance += currentGameBalance;
-            
-            // Начисляем 1 опыт за успешную игру
-            addTokens(1);
-            
-            gameOver = true;
-            
-            updateUI();
-            saveData(); // Сохраняем после выигрыша
-            endGame();
-            
-            // Запускаем фейерверки при выигрыше
-            createFireworks(25, 4000);
-            
-            showStatus(`🎉 Вы выиграли ${formatNumber(currentGameBalance)} ₽! +1 опыт`, 'win');
-        }
-        
-        // Завершение игры
-        function endGame() {
-            startBtn.disabled = false;
-            cashoutBtn.disabled = true;
-            betInput.disabled = false;
-            
-            // Включить клетки для новой игры
-            cells.forEach(cell => {
-                if (!cell.classList.contains('opened')) {
-                    cell.style.cursor = 'pointer';
-                }
-            });
-        }
-        
-        // Обновление интерфейса
-        function updateUI() {
-            totalBalanceElement.textContent = `${formatNumber(totalBalance)} ₽`;
-            totalTokensElement.textContent = `${formatNumber(totalTokens)}`;
-            feverAmountElement.textContent = `${feverTokens}`;
-            currentWinElement.textContent = `${formatNumber(currentGameBalance)} ₽`;
-            multiplierElement.textContent = `${winStreak.toFixed(1)}x`;
-            bombsCountElement.textContent = bombsCount;
-            updateBetLimitsDisplay();
-            updateFever();
-            
-            // Обновляем информацию о наградах
-            tokenReward.textContent = `За каждую выигранную игру: +1 опыт`;
-            
-            // Проверка баланса для кнопки старта
-            checkBalance();
-        }
-        
-        // Проверка баланса
-        function checkBalance() {
-            const bet = parseInt(betInput.value) || 0;
-            
-            if (bet < 1) {
-                balanceWarning.textContent = 'Минимальная ставка: 1 ₽';
-                balanceWarning.style.color = '#FF6B6B';
-                startBtn.disabled = true;
-            } else if (bet > currentMaxBet) {
-                balanceWarning.textContent = `Максимальная ставка: ${formatNumber(currentMaxBet)} ₽`;
-                balanceWarning.style.color = '#FF6B6B';
-                startBtn.disabled = true;
-            } else if (bet > totalBalance) {
-                balanceWarning.textContent = `Недостаточно средств. Доступно: ${formatNumber(totalBalance)} ₽`;
-                balanceWarning.style.color = '#FF6B6B';
-                startBtn.disabled = true;
-            } else {
-                balanceWarning.textContent = '';
-                startBtn.disabled = false;
-            }
-        }
-        
-        // Форматирование чисел с пробелами
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-        }
-        
-        // Показать статус
-        function showStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message ${type}`;
-            
-            // Автоматически скрыть сообщение через 5 секунд для важных сообщений
-            const delay = type === 'win' && (message.includes('ПОЗДРАВЛЯЕМ') || message.includes('УРОВЕНЬ МАСТЕРА')) ? 5000 : 3000;
-            
-            setTimeout(() => {
-                statusMessage.textContent = '';
-                statusMessage.className = 'status-message';
-            }, delay);
-        }
-        
-        // Обработчики событий
-        startBtn.addEventListener('click', startGame);
-        cashoutBtn.addEventListener('click', cashOut);
-        resetBalanceBtn.addEventListener('click', resetBalance);
-        buyFeverBtn.addEventListener('click', buyFever);
-        
-        // Кнопка активации лихорадки
-        feverPanel.addEventListener('click', function(e) {
-            if (e.target !== buyFeverBtn && feverTokens > 0 && !feverActive) {
-                activateFever();
-            }
-        });
-        
-        // Обработчик ввода ставки с динамическим ограничением
-        betInput.addEventListener('input', function() {
-            let value = parseInt(this.value);
-            
-            if (isNaN(value)) {
-                this.value = '';
-                checkBalance();
-                return;
-            }
-            
-            if (value < 1) {
-                this.value = 1;
-            } else if (value > currentMaxBet) {
-                this.value = currentMaxBet;
-            }
-            
-            checkBalance();
-        });
-        
-        // Также проверяем при изменении
-        betInput.addEventListener('change', function() {
-            let value = parseInt(this.value);
-            
-            if (isNaN(value) || value < 1) {
-                this.value = 1;
-            } else if (value > currentMaxBet) {
-                this.value = currentMaxBet;
-            }
-            
-            checkBalance();
-        });
-        
-        // Очистка фейерверков при клике на игру
-        gameBoard.addEventListener('click', () => {
-            if (!isFireworksActive) {
-                clearFireworks();
-            }
-        });
-        
-        // Обновление таймера лихорадки каждую секунду
-        setInterval(updateFever, 1000);
-        
-        // Автоматическое сохранение при изменении баланса (каждые 30 секунд)
-        setInterval(() => {
-            if (!gameOver) {
-                saveData();
-            }
-        }, 30000);
-        
-        // Инициализация при загрузке
+        // Инициализация
         function init() {
-            loadSavedData(); // Загружаем сохраненные данные
-            initializeBoard();
-            updateUI();
-            checkBalance();
-            setupBeforeUnload(); // Настраиваем сохранение при закрытии
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
             
-            console.log('Игра "Бомбочки" загружена. Текущий баланс:', totalBalance, 'Опыт:', totalTokens, 'Лихорадка:', feverTokens);
-            console.log('Текущий лимит ставки:', currentMaxBet, '₽');
+            // Создаем снежинки
+            createSnowflakes();
+            setInterval(createSnowflakes, 3000);
+            
+            // Случайные фейерверки
+            setInterval(() => {
+                if (Math.random() < 0.03) {
+                    createFirework();
+                }
+            }, 1000);
         }
         
-        // Запускаем инициализацию при полной загрузке страницы
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+        // Запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
